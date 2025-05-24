@@ -118,5 +118,3 @@ Dependencies:
 pip install torch numpy matplotlib
 ```
 
-## Author
-Generated with ❤️ by ChatGPT
