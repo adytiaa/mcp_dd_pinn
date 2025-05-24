@@ -118,3 +118,4 @@ Dependencies:
 pip install torch numpy matplotlib
 ```
 
+![arch](mcp_pinn.png "mcp_pinn")
