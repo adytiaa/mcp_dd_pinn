@@ -209,6 +209,10 @@ Dependencies:
 pip install torch numpy matplotlib
 ```
 
+<<<<<<< HEAD
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+=======
+![arch](mcp_pinn.png "mcp_pinn")
+>>>>>>> b2b09e4d94bc1af6d996b8ac9e2fd1372d378974
