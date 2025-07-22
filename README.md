@@ -87,6 +87,97 @@ MCP is an iterative method for enforcing continuity and consistency across subdo
 **In summary, PINNs with DDMCP offer a structured and modular way to apply physics-informed machine learning to complex PDE problems by breaking them down into manageable sub-problems and iteratively enforcing consistency between them.** 
 
 
+Of course. Let's integrate a more sophisticated **Model Context Protocol (MCP)** into the previous code. Instead of simple weight averaging, we will now implement a more representative version of MCP that searches for a low-loss path between the trained subdomain models.
+
+### Explanation and Relevance of the Model Context Protocol (MCP)
+
+#### What is the Model Context Protocol?
+
+The Model Context Protocol (MCP) is a method for intelligently combining multiple neural network models that have been trained on different, but related, tasks or datasets. In our case, the "tasks" are solving the same physical laws (Navier-Stokes) on different subdomains.
+
+The core idea comes from the **Mode Connectivity Hypothesis**, which observes that the low-loss solutions ("modes") found by training a network multiple times are not isolated points in the high-dimensional space of model weights. Instead, they can often be connected by simple, continuous paths along which the loss remains low.
+
+MCP exploits this by actively searching for such a low-loss path between our specialized subdomain PINNs. A model selected from this path is often more robust and generalizes better than a model created by simply averaging the weights.
+
+#### Why is MCP Relevant and Better than Simple Averaging?
+
+1.  **Avoiding High-Loss Barriers:** Imagine two good solutions (our trained subdomain PINNs) as two deep valleys in a complex loss landscape. Simple weight averaging is equivalent to drawing a straight line between the bottoms of these valleys. This straight line might go directly through a high mountain ridge (a region of high loss), resulting in a combined model that is terrible. MCP, by contrast, searches for a "mountain pass"—a curved path that connects the valleys while staying at a low altitude (low loss).
+
+2.  **Finding a More Generalizable Solution:** Solutions found in wide, flat regions of the loss landscape are known to generalize better than solutions in sharp, narrow ravines. The existence of a low-loss path between two modes suggests they both lie within a larger, well-behaved flat basin. By finding a model on this path, MCP produces a single, unified solution that is not just an awkward compromise but a truly robust model that inherits the "knowledge" of the individual experts and is less sensitive to small variations, thus generalizing better across the entire domain.
+
+3.  **Physical Consistency:** The search for the best point on the connecting path is guided by minimizing the *physics loss* (the PDE residuals). This ensures that the resulting unified model is not just a mathematical blend but is the most physically consistent solution along that path, smoothly stitching the physics from one subdomain to the next.
+
+---
+
+### Implementation: MCP via Bézier Curve Path Search
+
+We will implement MCP by:
+1.  Defining a **quadratic Bézier curve** in the weight space to create a path between two models.
+2.  Sampling points along this path to create new candidate models.
+3.  Evaluating each candidate model against the physics loss on the combined subdomain.
+4.  Selecting the model from the path that has the lowest loss.
+5.  Applying this process hierarchically to combine all four models.
+
+
+## Model Context Protocol (MCP) in the Context of PINNs and Their Variants
+
+### Overview
+
+**Physics-Informed Neural Networks (PINNs)** are deep learning models designed to solve problems governed by physical laws, typically expressed as partial differential equations (PDEs). Integrating PINNs (and their variants) into enterprise or research environments often requires managing complex data sources, physical parameters, and simulation tools. This is where the **Model Context Protocol (MCP)** provides value.
+
+### How MCP Works with PINNs
+
+#### 1. **Model-Agnostic Integration**
+- MCP is designed to be **model-agnostic**, meaning it can interface with any machine learning model architecture and framework—including PINNs and their derivatives (such as fractional PINNs, stochastic PINNs, or domain-adapted PINNs)[3].
+- PINNs, built in TensorFlow or PyTorch, can be connected through MCP’s standardized interface without rewriting backend logic. This seamless integration supports data flow, input/output management, and context sharing across tools[3].
+
+#### 2. **Sharing Physical Context and Data**
+- PINNs require real-time or historical physical data, boundary conditions, and sometimes simulation code as context. MCP exposes these as standardized resources (files, datasets, or APIs) via its servers[1][4].
+- PINN models operating as clients can fetch, use, and update the physical context (e.g., experimental measurements, sensor feeds, or domain-specific constants) during training or inference, all mediated securely by MCP[6].
+
+#### 3. **Tool and Workflow Execution**
+- MCP allows PINNs to **interact with external analytical or scientific tools** (such as simulation engines, solvers, or visualization platforms) by invoking tool functions published by MCP servers[1].
+- This is especially useful with PINN variants that use hybrid optimization or multi-step pipelines, enabling the AI to automate parts of the simulation, validation, or calibration processes during scientific workflows[4].
+
+#### 4. **Collaboration and Version Control**
+- In multi-agent scientific environments, MCP supports robust context sharing, agent coordination, and versioning, meaning multiple PINN agents or variant models can **collaborate, update, and access shared resources**, improving reproducibility and accelerating complex workflows[2].
+- For example, several PINNs can access different parts of a distributed knowledge base managed via MCP, synchronizing discoveries or experimental results dynamically.
+
+### Security and Governance
+
+- **Explicit user consent** is required for data access or tool execution, protecting sensitive simulation data or proprietary models[1][4].
+- Data privacy and fine-grained access controls ensure that only authorized PINN instances or researchers interact with the necessary resources.
+
+### Example Scenario
+
+| Task                        | Role of MCP                                             | Benefit to PINNs/Variants                      |
+|-----------------------------|--------------------------------------------------------|------------------------------------------------|
+| Fetching boundary data      | MCP retrieves latest measurements from IoT sensors     | Real-time accuracy in physical modeling        |
+| Accessing simulation code   | PINN pulls verified solver modules via MCP             | Standardizes workflow and code reuse           |
+| Collaborating on experiments| Multiple PINNs share/update context over MCP           | Synchronization and collaboration              |
+| Scalable deployment         | New PINN variants plug into same MCP architecture      | Reduces integration overhead, boosts agility   |
+
+### Advantages for PINNs and Variant Models
+
+- **Flexibility:** Easy swapping or upgrading of model architecture without altering the integration pipeline[3].
+- **Standardization:** Unified approach to connecting simulations, datasets, and tools using one protocol[1][4].
+- **Enhanced Collaboration:** Facilitates multi-model and multi-agent workflows, vital in multidisciplinary scientific research[2].
+- **Future-Proofing:** As PINNs evolve (with new physics, data types, or learning strategies), MCP’s abstracted interface remains stable.
+
+### Conclusion
+
+The Model Context Protocol acts as a universal connector between PINNs (and their related models) and external data, tools, and collaborators—eliminating custom integration bottlenecks, enabling richer context usage, and standardizing complex scientific workflows[1][2][3][4]. This positions PINNs to better harness live physical data, collaborate across teams, and adopt new techniques faster in real-world, production-scale environments.
+
+[1] https://www.anthropic.com/news/model-context-protocol
+[2] https://arxiv.org/html/2504.21030v1
+[3] https://milvus.io/ai-quick-reference/what-does-it-mean-for-model-context-protocol-mcp-to-be-modelagnostic
+[4] https://www.descope.com/learn/post/mcp
+[5] https://www.linkedin.com/pulse/unlocking-power-physics-informed-neural-networks-gurmeet-singh-m5tqf
+[6] https://arre-ankit.hashnode.dev/unlocking-the-power-of-mcp-protocol
+[7] https://modelcontextprotocol.io
+[8] https://www.marktechpost.com/2025/07/19/maybe-physics-based-ai-is-the-right-approach-revisiting-the-foundations-of-intelligence/
+[9] https://www.mdpi.com/2673-2688/5/3/74
+
 # PINN Navier-Stokes Solver with Domain Decomposition and MCP
 
 This project implements a Physics-Informed Neural Network (PINN) for solving the 2D incompressible Navier-Stokes equations using:
@@ -118,3 +209,6 @@ Dependencies:
 pip install torch numpy matplotlib
 ```
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
